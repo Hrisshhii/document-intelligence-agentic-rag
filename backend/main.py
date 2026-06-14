@@ -62,7 +62,8 @@ def home():
 
 @app.on_event("startup")
 def load_sample_documents():
-
+    if collection.count() > 0:
+        return
     sample_dir = "sample_documents"
 
     if not os.path.exists(sample_dir):
@@ -222,3 +223,9 @@ def get_documents():
         result,
         key=lambda x: x["filename"]
     )
+
+@app.get("/debug")
+def debug():
+    return {
+        "chunks": collection.count()
+    }

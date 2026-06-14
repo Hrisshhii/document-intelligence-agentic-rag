@@ -43,16 +43,20 @@ def add_document_pages(pages, filename):
                 }]
             )
 def search_documents(query):
+
     query_embedding = embedding_model.encode(
         query
     ).tolist()
 
-    results = collection.query(
+    return collection.query(
         query_embeddings=[query_embedding],
-        n_results=5
+        n_results=10,
+        include=[
+            "documents",
+            "metadatas",
+            "distances"
+        ]
     )
-
-    return results
 
 def build_context(results):
 
@@ -91,7 +95,7 @@ def generate_answer(query, results):
     if not docs:
         return "No relevant information found."
 
-    context = "\n\n".join(docs[:5])
+    context = "\n\n".join(docs)
 
     prompt = f"""
 You are a document assistant.

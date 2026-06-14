@@ -53,97 +53,175 @@ export default function ChatPage() {
   }
 
   return (
-    <main className="max-w-6xl mx-auto p-8">
-      <h1 className="text-4xl font-bold mb-6">
-        Document Chatbot
-      </h1>
+    <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="mb-8">
+        <h1 className="text-5xl font-bold">
+            Document Intelligence Chat
+        </h1>
 
-      <div className="flex gap-2 mb-6">
+        <p className="text-zinc-400 mt-2">
+            Ask questions across all indexed documents
+        </p>
+        </div>
+
+        <div className="flex gap-3 mb-8">
         <input
-          className="flex-1 border rounded p-3 text-black"
-          placeholder="Ask a question..."
-          value={question}
-          onChange={(e) =>
+            className="
+            flex-1
+            rounded-xl
+            border
+            border-zinc-700
+            bg-zinc-900
+            text-white
+            placeholder:text-zinc-500
+            p-4
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-500
+            "
+            placeholder="Ask a question..."
+            value={question}
+            onChange={(e) =>
             setQuestion(e.target.value)
-          }
+            }
+            onKeyDown={(e) => {
+            if (e.key === "Enter") {
+                askQuestion();
+            }
+            }}
         />
 
         <button
-          onClick={askQuestion}
-          className="border rounded px-5"
+            onClick={askQuestion}
+            disabled={loading}
+            className="
+            bg-blue-600
+            hover:bg-blue-700
+            disabled:bg-zinc-700
+            text-white
+            px-6
+            rounded-xl
+            font-medium
+            transition
+            "
         >
-          Ask
+            {loading ? "..." : "Ask"}
         </button>
-      </div>
+        </div>
 
-      {loading && (
-        <p>Searching documents...</p>
-      )}
+        {messages.length === 0 && (
+        <div className="border border-zinc-800 rounded-2xl p-12 text-center">
+            <h2 className="text-2xl font-semibold mb-2">
+            Start a conversation
+            </h2>
 
-      <div className="space-y-6">
+            <p className="text-zinc-400">
+            Ask questions about your uploaded documents.
+            </p>
+        </div>
+        )}
+
+        <div className="space-y-8">
         {messages.map((msg, index) => (
-          <div
-            key={index}
-            className="border rounded p-4"
-          >
-            <div className="mb-4">
-              <p className="font-bold">
-                You
-              </p>
+            <div key={index}>
 
-              <p>{msg.question}</p>
+            {/* User */}
+
+            <div className="flex justify-end mb-4">
+                <div className="
+                bg-blue-600
+                text-white
+                px-5
+                py-3
+                rounded-2xl
+                max-w-2xl
+                ">
+                {msg.question}
+                </div>
             </div>
 
-            <div className="mb-4">
-              <p className="font-bold">
+            {/* Assistant */}
+
+            <div className="
+                border
+                border-zinc-800
+                bg-zinc-950
+                rounded-2xl
+                p-5
+            ">
+                <p className="font-semibold mb-3">
                 Assistant
-              </p>
+                </p>
 
-              <p className="whitespace-pre-wrap">
+                <p className="whitespace-pre-wrap leading-7">
                 {msg.answer}
-              </p>
-            </div>
+                </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {msg.citations.map(
-                (citation, idx) => (
-                  <a
-                    key={idx}
-                    href={`http://127.0.0.1:8000/images/${citation.image
-                      .split("/")
-                      .pop()}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <div className="border rounded p-2">
-                      <p>
-                        {
-                          citation.filename
-                        }
-                      </p>
+                {msg.citations.length > 0 && (
+                <>
+                    <div className="border-t border-zinc-800 my-5" />
 
-                      <p>
-                        Page{" "}
-                        {
-                          citation.page
-                        }
-                      </p>
+                    <h3 className="font-medium mb-4">
+                    Sources
+                    </h3>
 
-                      <img
-                        src={`http://127.0.0.1:8000/images/${citation.image
-                          .split("/")
-                          .pop()}`}
-                        alt="citation"
-                        className="mt-2 rounded border"
-                      />
+                    <div className="
+                    grid
+                    grid-cols-1
+                    md:grid-cols-2
+                    lg:grid-cols-3
+                    gap-4
+                    ">
+                    {msg.citations.map(
+                        (citation, idx) => (
+                        <a
+                            key={idx}
+                            href={`http://127.0.0.1:8000/images/${citation.image
+                            .split("/")
+                            .pop()}`}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <div className="
+                            border
+                            border-zinc-800
+                            rounded-xl
+                            overflow-hidden
+                            hover:border-blue-500
+                            transition
+                            ">
+                            <img
+                                src={`http://127.0.0.1:8000/images/${citation.image
+                                .split("/")
+                                .pop()}`}
+                                alt="citation"
+                                className="
+                                w-full
+                                h-48
+                                object-cover
+                                "
+                            />
+
+                            <div className="p-3">
+                                <p className="font-medium truncate">
+                                {citation.filename}
+                                </p>
+
+                                <p className="text-sm text-zinc-400">
+                                Page {citation.page}
+                                </p>
+                            </div>
+                            </div>
+                        </a>
+                        )
+                    )}
                     </div>
-                  </a>
-                )
-              )}
+                </>
+                )}
             </div>
-          </div>
+            </div>
         ))}
-      </div>
+        </div>
     </main>
-  );
+    );
 }
