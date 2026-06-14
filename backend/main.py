@@ -12,7 +12,7 @@ from rag import (
     add_document_pages,
 )
 
-from classifier import classify_document
+from classifier import (classify_document,local_classify)
 from parser import parse_pdf
 
 import json
@@ -60,6 +60,34 @@ def home():
         "message": "API Running"
     }
 
+@app.on_event("startup")
+def load_sample_documents():
+
+    sample_dir = "sample_documents"
+
+    if not os.path.exists(sample_dir):
+        return
+
+    for filename in os.listdir(sample_dir):
+
+        file_path = os.path.join(
+            sample_dir,
+            filename
+        )
+
+        try:
+            pages = parse_pdf(file_path)
+
+            try:
+                add_document_pages(
+                    pages,
+                    filename
+                )
+            except Exception:
+                pass
+
+        except Exception:
+            pass
 
 @app.post("/upload")
 async def upload_document(
@@ -112,13 +140,9 @@ async def upload_document(
             classify_document(all_text)
         )
     except Exception:
-        classification = {
-            "document_type": "Unknown",
-            "topic": "Unknown",
-            "sensitivity": "Unknown",
-            "contains_tables": False,
-            "summary": "Classification unavailable"
-        }
+        classification = local_classify(
+            all_text
+        )
 
     return {
         "filename": safe_filename,
