@@ -2,80 +2,164 @@
 
 ## Overview
 
-Document Intelligence + Agentic RAG is a full-stack application that enables users to upload documents, automatically classify them, index their contents using semantic embeddings, and chat with their knowledge base using Retrieval-Augmented Generation (RAG).
+Document Intelligence + Agentic RAG is a full-stack document understanding platform that ingests real-world documents, extracts content using OCR, classifies documents using an LLM, indexes them with semantic embeddings, and enables users to ask questions through a citation-aware chatbot.
 
-The system supports document ingestion, semantic search, citation-aware responses, page image previews, and multi-document querying.
+The system is designed to work with scanned PDFs, image-heavy reports, text documents, and structured business documents while providing grounded answers backed by source citations and page previews.
+
+---
 
 ## Features
 
-### Document Processing
+### Document Parsing
 
-* PDF document upload
-* OCR/text extraction pipeline
-* Page image generation
-* Multi-document support
+* PDF document ingestion
+* OCR support for scanned pages using Tesseract
+* Page image rendering for every document page
+* Plain text extraction
+* Support for image-heavy reports
+* Storage of both extracted text and page images
 
-### Classification
+### Document Classification
 
-* AI-powered document classification
-* Document type detection
-* Topic identification
-* Sensitivity analysis
-* Table detection
+Each uploaded document is automatically classified across multiple dimensions:
 
-### Retrieval-Augmented Generation
+* Document Type
 
-* SentenceTransformer embeddings
-* ChromaDB vector storage
-* Semantic similarity search
+  * Invoice
+  * Resume
+  * Research Paper
+  * Meeting Notes
+  * Financial Report
+  * Employee Handbook
+  * Others
+
+* Topic Detection
+
+* Sensitivity Analysis
+
+* Table Detection
+
+Output is returned as structured JSON.
+
+### Agentic RAG
+
+* Semantic retrieval using vector embeddings
+* ChromaDB vector database
 * Recursive text chunking
 * Context-aware retrieval
+* Grounded answer generation
+* Hallucination prevention through retrieval-first architecture
 
-### Citations
+### Citation System
 
-* Source document tracking
-* Page-level citations
-* Source page image previews
-* Citation-aware answers
+Every answer includes:
 
-### Security
+* Source document name
+* Page number
+* Rendered page thumbnail
+* Clickable page preview
 
-* File type validation
-* File size restrictions
-* Filename sanitization
-* CORS configuration
-* Empty-result handling
+### Bulk Upload
+
+* Upload multiple documents simultaneously
+* Individual processing status tracking:
+
+  * Parsing
+  * Classifying
+  * Indexed
+  * Failed
+
+### Modern User Interface
+
+* Dark themed dashboard
+* Upload center
+* Document library
+* Chat interface
+* Citation previews
+* Processing status indicators
+
+---
+
+## Sample Documents Included
+
+The repository includes sample documents so the application works immediately after setup.
+
+Examples include:
+
+* Employee Handbook
+* Financial Report
+* Invoice
+* Meeting Notes
+* Research Paper
+* Resume
+
+---
 
 ## Architecture
 
-Frontend:
+### Frontend
 
-* Next.js 16
+* Next.js
 * TypeScript
 * Tailwind CSS
 
-Backend:
+### Backend
 
 * FastAPI
 * ChromaDB
 * Sentence Transformers
-* Gemini API (with fallback mode)
+* Gemini API
+* pdfplumber
+* pdf2image
+* pytesseract
 
-Flow:
+### Storage
 
-Upload Document
-→ Parse PDF
-→ Extract Text
-→ Generate Page Images
-→ Create Chunks
-→ Generate Embeddings
-→ Store in ChromaDB
+* ChromaDB (Vector Store)
+* Local File Storage
+* Generated Page Images
+
+---
+
+## System Flow
+
+Document Upload
+
+→ File Validation
+
+→ PDF Parsing
+
+→ OCR Extraction
+
+→ Page Image Generation
+
+→ Text Chunking
+
+→ Embedding Generation
+
+→ ChromaDB Indexing
+
+→ Document Classification
+
+→ Ready for Retrieval
+
+---
 
 User Question
-→ Semantic Search
+
+→ Query Embedding
+
+→ Vector Search
+
 → Retrieve Relevant Chunks
+
+→ Build Context
+
 → Generate Answer
-→ Return Citations
+
+→ Return Citations + Page Images
+
+---
 
 ## Project Structure
 
@@ -92,14 +176,23 @@ frontend/
 * components/
 * lib/
 
-vector_db/
-uploads/
-page_images/
+storage/
+
+* uploads/
+* page_images/
+* vector_db/
+
+sample_documents/
+
+* Example PDFs
+
+---
 
 ## Setup
 
 ### Backend
 
+```bash
 cd backend
 
 python -m venv venv
@@ -109,37 +202,165 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 uvicorn main:app --reload
+```
+
+Backend runs on:
+
+```bash
+http://127.0.0.1:8000
+```
 
 ### Frontend
 
+```bash
 cd frontend
 
 npm install
 
 npm run dev
+```
+
+Frontend runs on:
+
+```bash
+http://localhost:3000
+```
+
+---
 
 ## Security Decisions
 
-* Uploaded filenames are sanitized using pathlib.
-* Unsupported file types are rejected.
-* Files larger than 10 MB are blocked.
-* Empty search results are handled gracefully.
-* Generated assets are excluded from version control.
-* Environment variables are used for API keys.
+### Upload Layer
 
-## Future Improvements
+Implemented:
 
-* Multi-modal document understanding
-* Table-aware extraction
-* Advanced agent workflows
+* File extension validation
+* File size limits (10 MB)
+* Filename sanitization using pathlib
+* Restricted upload directory
+
+Considered:
+
+* Malware scanning
+* MIME type verification
+
+Future Improvements:
+
+* Antivirus scanning
+* Content-based file validation
+
+### Storage Layer
+
+Implemented:
+
+* Separate upload storage directory
+* Isolated page image generation
+* Environment variables for secrets
+
+Considered:
+
+* Encryption at rest
+
+Future Improvements:
+
+* Encrypted storage
+* Object storage (S3 compatible)
+
+### Processing Layer
+
+Implemented:
+
+* Controlled OCR pipeline
+* Exception handling during parsing
+* Safe document chunking
+
+Considered:
+
+* Sandboxed processing
+
+Future Improvements:
+
+* Containerized processing workers
+* Queue-based document processing
+
+### API & Retrieval Layer
+
+Implemented:
+
+* CORS restrictions
+* Query length limits
+* Empty-result handling
+* Retrieval-based grounding
+
+Considered:
+
+* Authentication
+* Rate limiting
+
+Future Improvements:
+
+* JWT authentication
+* API rate limiting
 * Role-based access control
-* Cloud storage integration
-* Streaming responses
+
+---
 
 ## Screenshots
 
-(Add screenshots after UI improvements)
+### Home Page
 
-## Author
+![Home](screenshots/home.png)
 
-Hrishikesh Rathod
+### Bulk Upload
+
+![Upload](screenshots/upload.png)
+
+### Document Library
+
+![Documents](screenshots/documents.png)
+
+### Chat Interface
+
+![Chat](screenshots/chat.png)
+
+### Citation Preview
+
+![Citations](screenshots/citations.png)
+
+---
+
+## Future Improvements
+
+* Table-aware structured extraction
+* Multi-modal document understanding
+* Voice input support
+* Streaming AI responses
+* Authentication system
+* Cloud storage integration
+* Multi-user support
+* Advanced agent workflows
+
+---
+
+## Tech Stack
+
+Frontend
+
+* Next.js
+* TypeScript
+* Tailwind CSS
+
+Backend
+
+* FastAPI
+* ChromaDB
+* Sentence Transformers
+* Gemini API
+
+Document Processing
+
+* pdfplumber
+* pdf2image
+* pytesseract
+
+---
