@@ -14,7 +14,6 @@ from rag import (
 from parser import parse_pdf
 
 app = FastAPI()
-
 UPLOAD_DIR = "uploads"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -30,7 +29,6 @@ app.mount(
 
 class ChatRequest(BaseModel):
     question: str
-
 
 @app.get("/")
 def home():

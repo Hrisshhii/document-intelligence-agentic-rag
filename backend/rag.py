@@ -8,11 +8,9 @@ splitter = RecursiveCharacterTextSplitter(
 )
 
 client = PersistentClient(path="vector_db")
-
 collection = client.get_or_create_collection(
     name="documents"
 )
-
 embedding_model = SentenceTransformer(
     "all-MiniLM-L6-v2"
 )
