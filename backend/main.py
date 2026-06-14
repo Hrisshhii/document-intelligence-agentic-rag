@@ -1,35 +1,48 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from rag import collection
-from classifier import classify_document
-import json
-import os
+from pydantic import BaseModel
+from pathlib import Path
 
 from rag import (
+    collection,
     search_documents,
     build_context,
     generate_answer,
-    add_document_pages
+    add_document_pages,
 )
 
+from classifier import classify_document
 from parser import parse_pdf
 
+import json
+import os
+
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 UPLOAD_DIR = "uploads"
+
+ALLOWED_EXTENSIONS = {
+    ".pdf",
+    ".txt"
+}
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs("page_images", exist_ok=True)
 
-# Serve page images
 app.mount(
     "/images",
     StaticFiles(directory="page_images"),
@@ -40,6 +53,7 @@ app.mount(
 class ChatRequest(BaseModel):
     question: str
 
+
 @app.get("/")
 def home():
     return {
@@ -48,38 +62,66 @@ def home():
 
 
 @app.post("/upload")
-async def upload_document(file: UploadFile = File(...)):
+async def upload_document(
+    file: UploadFile = File(...)
+):
+    safe_filename = Path(
+        file.filename
+    ).name
+
+    file_extension = os.path.splitext(
+        safe_filename
+    )[1].lower()
+
+    if file_extension not in ALLOWED_EXTENSIONS:
+        return {
+            "error":
+            "Only PDF and TXT files are allowed."
+        }
+
+    content = await file.read()
+
+    if len(content) > MAX_FILE_SIZE:
+        return {
+            "error":
+            "File exceeds 10MB limit."
+        }
 
     file_path = os.path.join(
         UPLOAD_DIR,
-        file.filename
+        safe_filename
     )
 
     with open(file_path, "wb") as f:
-        f.write(await file.read())
+        f.write(content)
 
     pages = parse_pdf(file_path)
 
     add_document_pages(
         pages,
-        file.filename
+        safe_filename
     )
 
     all_text = "\n".join(
-        [page["text"] for page in pages]
+        page["text"]
+        for page in pages
     )
 
     try:
         classification = json.loads(
             classify_document(all_text)
         )
-    except:
+    except Exception:
         classification = {
-            "document_type": "Unknown"
+            "document_type": "Unknown",
+            "topic": "Unknown",
+            "sensitivity": "Unknown",
+            "contains_tables": False,
+            "summary": "Classification unavailable"
         }
 
     return {
-        "filename": file.filename,
+        "filename": safe_filename,
         "pages": len(pages),
         "classification": classification
     }
@@ -88,13 +130,21 @@ async def upload_document(file: UploadFile = File(...)):
 @app.post("/chat")
 def chat(request: ChatRequest):
 
+    if len(request.question) > 1000:
+        return {
+            "answer":
+            "Question exceeds maximum length.",
+            "citations": []
+        }
+
     results = search_documents(
         request.question
     )
 
     if not results["documents"][0]:
         return {
-            "answer": "No relevant information found.",
+            "answer":
+            "No relevant information found.",
             "citations": []
         }
 
@@ -111,6 +161,7 @@ def chat(request: ChatRequest):
         "answer": answer,
         "citations": citations
     }
+
 
 @app.get("/documents")
 def get_documents():
@@ -143,5 +194,7 @@ def get_documents():
             "pages": len(doc["pages"])
         })
 
-    return result
-
+    return sorted(
+        result,
+        key=lambda x: x["filename"]
+    )
