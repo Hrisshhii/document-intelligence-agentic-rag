@@ -85,8 +85,35 @@ Page: {meta['page']}
     return context, citations
 
 def generate_answer(query, results):
+
     docs = results["documents"][0]
+
     if not docs:
         return "No relevant information found."
 
-    return "\n\n".join(docs[:3])
+    context = "\n\n".join(docs[:5])
+
+    prompt = f"""
+You are a document assistant.
+
+Answer ONLY from the provided context.
+
+Rules:
+- Do not make up information.
+- If the answer is not present, say:
+  "I could not find this information in the uploaded documents."
+- Keep answers concise and factual.
+- Use bullet points when appropriate.
+
+Context:
+{context}
+
+Question:
+{query}
+"""
+
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception:
+        return "\n\n".join(docs[:3])
