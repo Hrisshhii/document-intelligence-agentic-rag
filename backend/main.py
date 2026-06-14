@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from rag import collection
 from classifier import classify_document
 import json
 import os
@@ -110,3 +111,37 @@ def chat(request: ChatRequest):
         "answer": answer,
         "citations": citations
     }
+
+@app.get("/documents")
+def get_documents():
+
+    data = collection.get(
+        include=["metadatas"]
+    )
+
+    documents = {}
+
+    for meta in data["metadatas"]:
+
+        filename = meta["filename"]
+
+        if filename not in documents:
+            documents[filename] = {
+                "filename": filename,
+                "pages": set(),
+            }
+
+        documents[filename]["pages"].add(
+            meta["page"]
+        )
+
+    result = []
+
+    for doc in documents.values():
+        result.append({
+            "filename": doc["filename"],
+            "pages": len(doc["pages"])
+        })
+
+    return result
+

@@ -25,6 +25,13 @@ export default function Home() {
         >
           Open Chat
         </Link>
+
+        <Link
+          href="/documents"
+          className="px-6 py-3 border rounded-lg"
+        >
+          Documents
+        </Link>
       </div>
     </main>
   );
