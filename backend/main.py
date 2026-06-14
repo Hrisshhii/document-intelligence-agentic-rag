@@ -1,7 +1,9 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-
+from fastapi.middleware.cors import CORSMiddleware
+from classifier import classify_document
+import json
 import os
 
 from rag import (
@@ -14,6 +16,13 @@ from rag import (
 from parser import parse_pdf
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 UPLOAD_DIR = "uploads"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -55,9 +64,23 @@ async def upload_document(file: UploadFile = File(...)):
         file.filename
     )
 
+    all_text = "\n".join(
+        [page["text"] for page in pages]
+    )
+
+    try:
+        classification = json.loads(
+            classify_document(all_text)
+        )
+    except:
+        classification = {
+            "document_type": "Unknown"
+        }
+
     return {
         "filename": file.filename,
-        "pages": len(pages)
+        "pages": len(pages),
+        "classification": classification
     }
 
 

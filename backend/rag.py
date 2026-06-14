@@ -1,6 +1,7 @@
 from chromadb import PersistentClient
 from sentence_transformers import SentenceTransformer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from classifier import model
 
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=800,
@@ -59,6 +60,7 @@ def build_context(results):
     metadata = results["metadatas"][0]
     context = ""
     citations = []
+    seen = set()
     for doc, meta in zip(docs, metadata):
 
         context += f"""
@@ -70,17 +72,21 @@ Page: {meta['page']}
 -------------------
 """
 
-        citations.append({
-            "filename": meta["filename"],
-            "page": meta["page"],
-            "image": meta["image"]
-        })
+        key = f"{meta['filename']}_{meta['page']}"
+
+        if key not in seen:
+            seen.add(key)
+            citations.append({
+                "filename": meta["filename"],
+                "page": meta["page"],
+                "image": meta["image"]
+            })
 
     return context, citations
 
 def generate_answer(query, results):
     docs = results["documents"][0]
     if not docs:
-        return "No relevant information found in uploaded documents."
+        return "No relevant information found."
 
     return "\n\n".join(docs[:3])
